@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Illuminate\Support;
 
 use Illuminate\Support\Traits\Macroable;
@@ -7,6 +9,8 @@ use Ramsey\Uuid\Codec\TimestampFirstCombCodec;
 use Ramsey\Uuid\Generator\CombGenerator;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidFactory;
+use Ramsey\Uuid\UuidInterface;
+use voku\helper\ASCII;
 
 class Str
 {
@@ -41,13 +45,24 @@ class Str
     protected static $uuidFactory;
 
     /**
+     * Get a new stringable object from the given string.
+     *
+     * @param  string  $string
+     * @return \Illuminate\Support\Stringable
+     */
+    public static function of(string $string): Stringable
+    {
+        return new Stringable($string);
+    }
+
+    /**
      * Return the remainder of a string after the first occurrence of a given value.
      *
      * @param  string  $subject
      * @param  string  $search
      * @return string
      */
-    public static function after($subject, $search)
+    public static function after(string $subject, string $search): string
     {
         return $search === '' ? $subject : array_reverse(explode($search, $subject, 2))[0];
     }
@@ -59,7 +74,7 @@ class Str
      * @param  string  $search
      * @return string
      */
-    public static function afterLast($subject, $search)
+    public static function afterLast(string $subject, string $search): string
     {
         if ($search === '') {
             return $subject;
@@ -81,19 +96,9 @@ class Str
      * @param  string  $language
      * @return string
      */
-    public static function ascii($value, $language = 'en')
+    public static function ascii(string $value, string $language = 'en'): string
     {
-        $languageSpecific = static::languageSpecificCharsArray($language);
-
-        if (! is_null($languageSpecific)) {
-            $value = str_replace($languageSpecific[0], $languageSpecific[1], $value);
-        }
-
-        foreach (static::charsArray() as $key => $val) {
-            $value = str_replace($val, $key, $value);
-        }
-
-        return preg_replace('/[^\x20-\x7E]/u', '', $value);
+        return ASCII::to_ascii($value, $language);
     }
 
     /**
@@ -103,7 +108,7 @@ class Str
      * @param  string  $search
      * @return string
      */
-    public static function before($subject, $search)
+    public static function before(string $subject, string $search): string
     {
         return $search === '' ? $subject : explode($search, $subject)[0];
     }
@@ -115,7 +120,7 @@ class Str
      * @param  string  $search
      * @return string
      */
-    public static function beforeLast($subject, $search)
+    public static function beforeLast(string $subject, string $search): string
     {
         if ($search === '') {
             return $subject;
@@ -136,7 +141,7 @@ class Str
      * @param  string  $value
      * @return string
      */
-    public static function camel($value)
+    public static function camel(string $value): string
     {
         if (isset(static::$camelCache[$value])) {
             return static::$camelCache[$value];
@@ -152,7 +157,7 @@ class Str
      * @param  string|string[]  $needles
      * @return bool
      */
-    public static function contains($haystack, $needles)
+    public static function contains(string $haystack, $needles): bool
     {
         foreach ((array) $needles as $needle) {
             if ($needle !== '' && mb_strpos($haystack, $needle) !== false) {
@@ -170,7 +175,7 @@ class Str
      * @param  string[]  $needles
      * @return bool
      */
-    public static function containsAll($haystack, array $needles)
+    public static function containsAll(string $haystack, array $needles): bool
     {
         foreach ($needles as $needle) {
             if (! static::contains($haystack, $needle)) {
@@ -188,7 +193,7 @@ class Str
      * @param  string|string[]  $needles
      * @return bool
      */
-    public static function endsWith($haystack, $needles)
+    public static function endsWith(string $haystack, $needles): bool
     {
         foreach ((array) $needles as $needle) {
             if (substr($haystack, -strlen($needle)) === (string) $needle) {
@@ -206,7 +211,7 @@ class Str
      * @param  string  $cap
      * @return string
      */
-    public static function finish($value, $cap)
+    public static function finish(string $value, string $cap): string
     {
         $quoted = preg_quote($cap, '/');
 
@@ -220,7 +225,7 @@ class Str
      * @param  string  $value
      * @return bool
      */
-    public static function is($pattern, $value)
+    public static function is($pattern, string $value): bool
     {
         $patterns = Arr::wrap($pattern);
 
@@ -252,12 +257,23 @@ class Str
     }
 
     /**
+     * Determine if a given string is 7 bit ASCII.
+     *
+     * @param  string  $value
+     * @return bool
+     */
+    public static function isAscii(string $value): bool
+    {
+        return ASCII::is_ascii($value);
+    }
+
+    /**
      * Determine if a given string is a valid UUID.
      *
      * @param  string  $value
      * @return bool
      */
-    public static function isUuid($value)
+    public static function isUuid(string $value): bool
     {
         if (! is_string($value)) {
             return false;
@@ -272,7 +288,7 @@ class Str
      * @param  string  $value
      * @return string
      */
-    public static function kebab($value)
+    public static function kebab(string $value): string
     {
         return static::snake($value, '-');
     }
@@ -284,7 +300,7 @@ class Str
      * @param  string|null  $encoding
      * @return int
      */
-    public static function length($value, $encoding = null)
+    public static function length(string $value, ?string $encoding = null): int
     {
         if ($encoding) {
             return mb_strlen($value, $encoding);
@@ -301,7 +317,7 @@ class Str
      * @param  string  $end
      * @return string
      */
-    public static function limit($value, $limit = 100, $end = '...')
+    public static function limit(string $value, int $limit = 100, string $end = '...'): string
     {
         if (mb_strwidth($value, 'UTF-8') <= $limit) {
             return $value;
@@ -316,7 +332,7 @@ class Str
      * @param  string  $value
      * @return string
      */
-    public static function lower($value)
+    public static function lower(string $value): string
     {
         return mb_strtolower($value, 'UTF-8');
     }
@@ -329,7 +345,7 @@ class Str
      * @param  string  $end
      * @return string
      */
-    public static function words($value, $words = 100, $end = '...')
+    public static function words(string $value, int $words = 100, string $end = '...'): string
     {
         preg_match('/^\s*+(?:\S++\s*+){1,'.$words.'}/u', $value, $matches);
 
@@ -347,7 +363,7 @@ class Str
      * @param  string|null  $default
      * @return array<int, string|null>
      */
-    public static function parseCallback($callback, $default = null)
+    public static function parseCallback(string $callback, string $default = null): array
     {
         return static::contains($callback, '@') ? explode('@', $callback, 2) : [$callback, $default];
     }
@@ -359,7 +375,7 @@ class Str
      * @param  int  $count
      * @return string
      */
-    public static function plural($value, $count = 2)
+    public static function plural(string $value, int $count = 2): string
     {
         return Pluralizer::plural($value, $count);
     }
@@ -371,7 +387,7 @@ class Str
      * @param  int  $count
      * @return string
      */
-    public static function pluralStudly($value, $count = 2)
+    public static function pluralStudly(string $value, int $count = 2): string
     {
         $parts = preg_split('/(.)(?=[A-Z])/u', $value, -1, PREG_SPLIT_DELIM_CAPTURE);
 
@@ -386,7 +402,7 @@ class Str
      * @param  int  $length
      * @return string
      */
-    public static function random($length = 16)
+    public static function random(int $length = 16): string
     {
         $string = '';
 
@@ -409,7 +425,7 @@ class Str
      * @param  string  $subject
      * @return string
      */
-    public static function replaceArray($search, array $replace, $subject)
+    public static function replaceArray(string $search, array $replace, string $subject): string
     {
         $segments = explode($search, $subject);
 
@@ -430,7 +446,7 @@ class Str
      * @param  string  $subject
      * @return string
      */
-    public static function replaceFirst($search, $replace, $subject)
+    public static function replaceFirst(string $search, string $replace, string $subject): string
     {
         if ($search == '') {
             return $subject;
@@ -453,7 +469,7 @@ class Str
      * @param  string  $subject
      * @return string
      */
-    public static function replaceLast($search, $replace, $subject)
+    public static function replaceLast(string $search, string $replace, string $subject): string
     {
         $position = strrpos($subject, $search);
 
@@ -471,7 +487,7 @@ class Str
      * @param  string  $prefix
      * @return string
      */
-    public static function start($value, $prefix)
+    public static function start(string $value, string $prefix): string
     {
         $quoted = preg_quote($prefix, '/');
 
@@ -484,7 +500,7 @@ class Str
      * @param  string  $value
      * @return string
      */
-    public static function upper($value)
+    public static function upper(string $value): string
     {
         return mb_strtoupper($value, 'UTF-8');
     }
@@ -495,7 +511,7 @@ class Str
      * @param  string  $value
      * @return string
      */
-    public static function title($value)
+    public static function title(string $value): string
     {
         return mb_convert_case($value, MB_CASE_TITLE, 'UTF-8');
     }
@@ -506,7 +522,7 @@ class Str
      * @param  string  $value
      * @return string
      */
-    public static function singular($value)
+    public static function singular(string $value): string
     {
         return Pluralizer::singular($value);
     }
@@ -519,25 +535,11 @@ class Str
      * @param  string|null  $language
      * @return string
      */
-    public static function slug($title, $separator = '-', $language = 'en')
+    public static function slug(string $title, string $separator = '-', string $language = 'en'): string
     {
-        $title = $language ? static::ascii($title, $language) : $title;
+        $language = $language ?? '';
 
-        // Convert all dashes/underscores into separator
-        $flip = $separator === '-' ? '_' : '-';
-
-        $title = preg_replace('!['.preg_quote($flip).']+!u', $separator, $title);
-
-        // Replace @ with the word 'at'
-        $title = str_replace('@', $separator.'at'.$separator, $title);
-
-        // Remove all characters that are not the separator, letters, numbers, or whitespace.
-        $title = preg_replace('![^'.preg_quote($separator).'\pL\pN\s]+!u', '', static::lower($title));
-
-        // Replace all separator characters and whitespace by a single separator
-        $title = preg_replace('!['.preg_quote($separator).'\s]+!u', $separator, $title);
-
-        return trim($title, $separator);
+        return ASCII::to_slugify($title, $separator, $language, [], true);
     }
 
     /**
@@ -547,7 +549,7 @@ class Str
      * @param  string  $delimiter
      * @return string
      */
-    public static function snake($value, $delimiter = '_')
+    public static function snake(string $value, string $delimiter = '_'): string
     {
         $key = $value;
 
@@ -571,10 +573,10 @@ class Str
      * @param  string|string[]  $needles
      * @return bool
      */
-    public static function startsWith($haystack, $needles)
+    public static function startsWith(string $haystack, $needles): bool
     {
         foreach ((array) $needles as $needle) {
-            if ($needle !== '' && substr($haystack, 0, strlen($needle)) === (string) $needle) {
+            if ((string) $needle !== '' && substr($haystack, 0, strlen($needle)) === (string) $needle) {
                 return true;
             }
         }
@@ -588,7 +590,7 @@ class Str
      * @param  string  $value
      * @return string
      */
-    public static function studly($value)
+    public static function studly(string $value): string
     {
         $key = $value;
 
@@ -609,7 +611,7 @@ class Str
      * @param  int|null  $length
      * @return string
      */
-    public static function substr($string, $start, $length = null)
+    public static function substr(string $string, int $start, int $length = null): string
     {
         return mb_substr($string, $start, $length, 'UTF-8');
     }
@@ -620,7 +622,7 @@ class Str
      * @param  string  $string
      * @return string
      */
-    public static function ucfirst($string)
+    public static function ucfirst(string $string): string
     {
         return static::upper(static::substr($string, 0, 1)).static::substr($string, 1);
     }
@@ -630,7 +632,7 @@ class Str
      *
      * @return \Ramsey\Uuid\UuidInterface
      */
-    public static function uuid()
+    public static function uuid(): UuidInterface
     {
         return static::$uuidFactory
                     ? call_user_func(static::$uuidFactory)
@@ -642,7 +644,7 @@ class Str
      *
      * @return \Ramsey\Uuid\UuidInterface
      */
-    public static function orderedUuid()
+    public static function orderedUuid(): UuidInterface
     {
         if (static::$uuidFactory) {
             return call_user_func(static::$uuidFactory);
@@ -665,10 +667,10 @@ class Str
     /**
      * Set the callable that will be used to generate UUIDs.
      *
-     * @param  callable  $factory
+     * @param  callable|null  $factory
      * @return void
      */
-    public static function createUuidsUsing(callable $factory = null)
+    public static function createUuidsUsing(callable $factory = null): void
     {
         static::$uuidFactory = $factory;
     }
@@ -678,186 +680,8 @@ class Str
      *
      * @return void
      */
-    public static function createUuidsNormally()
+    public static function createUuidsNormally(): void
     {
         static::$uuidFactory = null;
-    }
-
-    /**
-     * Returns the replacements for the ascii method.
-     *
-     * Note: Adapted from Stringy\Stringy.
-     *
-     * @see https://github.com/danielstjules/Stringy/blob/3.1.0/LICENSE.txt
-     *
-     * @return array
-     */
-    protected static function charsArray()
-    {
-        static $charsArray;
-
-        if (isset($charsArray)) {
-            return $charsArray;
-        }
-
-        return $charsArray = [
-            '0'    => ['°', '₀', '۰', '０'],
-            '1'    => ['¹', '₁', '۱', '１'],
-            '2'    => ['²', '₂', '۲', '２'],
-            '3'    => ['³', '₃', '۳', '３'],
-            '4'    => ['⁴', '₄', '۴', '٤', '４'],
-            '5'    => ['⁵', '₅', '۵', '٥', '５'],
-            '6'    => ['⁶', '₆', '۶', '٦', '６'],
-            '7'    => ['⁷', '₇', '۷', '７'],
-            '8'    => ['⁸', '₈', '۸', '８'],
-            '9'    => ['⁹', '₉', '۹', '９'],
-            'a'    => ['à', 'á', 'ả', 'ã', 'ạ', 'ă', 'ắ', 'ằ', 'ẳ', 'ẵ', 'ặ', 'â', 'ấ', 'ầ', 'ẩ', 'ẫ', 'ậ', 'ā', 'ą', 'å', 'α', 'ά', 'ἀ', 'ἁ', 'ἂ', 'ἃ', 'ἄ', 'ἅ', 'ἆ', 'ἇ', 'ᾀ', 'ᾁ', 'ᾂ', 'ᾃ', 'ᾄ', 'ᾅ', 'ᾆ', 'ᾇ', 'ὰ', 'ά', 'ᾰ', 'ᾱ', 'ᾲ', 'ᾳ', 'ᾴ', 'ᾶ', 'ᾷ', 'а', 'أ', 'အ', 'ာ', 'ါ', 'ǻ', 'ǎ', 'ª', 'ა', 'अ', 'ا', 'ａ', 'ä', 'א'],
-            'b'    => ['б', 'β', 'ب', 'ဗ', 'ბ', 'ｂ', 'ב'],
-            'c'    => ['ç', 'ć', 'č', 'ĉ', 'ċ', 'ｃ'],
-            'd'    => ['ď', 'ð', 'đ', 'ƌ', 'ȡ', 'ɖ', 'ɗ', 'ᵭ', 'ᶁ', 'ᶑ', 'д', 'δ', 'د', 'ض', 'ဍ', 'ဒ', 'დ', 'ｄ', 'ד'],
-            'e'    => ['é', 'è', 'ẻ', 'ẽ', 'ẹ', 'ê', 'ế', 'ề', 'ể', 'ễ', 'ệ', 'ë', 'ē', 'ę', 'ě', 'ĕ', 'ė', 'ε', 'έ', 'ἐ', 'ἑ', 'ἒ', 'ἓ', 'ἔ', 'ἕ', 'ὲ', 'έ', 'е', 'ё', 'э', 'є', 'ə', 'ဧ', 'ေ', 'ဲ', 'ე', 'ए', 'إ', 'ئ', 'ｅ'],
-            'f'    => ['ф', 'φ', 'ف', 'ƒ', 'ფ', 'ｆ', 'פ', 'ף'],
-            'g'    => ['ĝ', 'ğ', 'ġ', 'ģ', 'г', 'ґ', 'γ', 'ဂ', 'გ', 'گ', 'ｇ', 'ג'],
-            'h'    => ['ĥ', 'ħ', 'η', 'ή', 'ح', 'ه', 'ဟ', 'ှ', 'ჰ', 'ｈ', 'ה'],
-            'i'    => ['í', 'ì', 'ỉ', 'ĩ', 'ị', 'î', 'ï', 'ī', 'ĭ', 'į', 'ı', 'ι', 'ί', 'ϊ', 'ΐ', 'ἰ', 'ἱ', 'ἲ', 'ἳ', 'ἴ', 'ἵ', 'ἶ', 'ἷ', 'ὶ', 'ί', 'ῐ', 'ῑ', 'ῒ', 'ΐ', 'ῖ', 'ῗ', 'і', 'ї', 'и', 'ဣ', 'ိ', 'ီ', 'ည်', 'ǐ', 'ი', 'इ', 'ی', 'ｉ', 'י'],
-            'j'    => ['ĵ', 'ј', 'Ј', 'ჯ', 'ج', 'ｊ'],
-            'k'    => ['ķ', 'ĸ', 'к', 'κ', 'Ķ', 'ق', 'ك', 'က', 'კ', 'ქ', 'ک', 'ｋ', 'ק'],
-            'l'    => ['ł', 'ľ', 'ĺ', 'ļ', 'ŀ', 'л', 'λ', 'ل', 'လ', 'ლ', 'ｌ', 'ל'],
-            'm'    => ['м', 'μ', 'م', 'မ', 'მ', 'ｍ', 'מ', 'ם'],
-            'n'    => ['ñ', 'ń', 'ň', 'ņ', 'ŉ', 'ŋ', 'ν', 'н', 'ن', 'န', 'ნ', 'ｎ', 'נ'],
-            'o'    => ['ó', 'ò', 'ỏ', 'õ', 'ọ', 'ô', 'ố', 'ồ', 'ổ', 'ỗ', 'ộ', 'ơ', 'ớ', 'ờ', 'ở', 'ỡ', 'ợ', 'ø', 'ō', 'ő', 'ŏ', 'ο', 'ὀ', 'ὁ', 'ὂ', 'ὃ', 'ὄ', 'ὅ', 'ὸ', 'ό', 'о', 'و', 'ို', 'ǒ', 'ǿ', 'º', 'ო', 'ओ', 'ｏ', 'ö'],
-            'p'    => ['п', 'π', 'ပ', 'პ', 'پ', 'ｐ', 'פ', 'ף'],
-            'q'    => ['ყ', 'ｑ'],
-            'r'    => ['ŕ', 'ř', 'ŗ', 'р', 'ρ', 'ر', 'რ', 'ｒ', 'ר'],
-            's'    => ['ś', 'š', 'ş', 'с', 'σ', 'ș', 'ς', 'س', 'ص', 'စ', 'ſ', 'ს', 'ｓ', 'ס'],
-            't'    => ['ť', 'ţ', 'т', 'τ', 'ț', 'ت', 'ط', 'ဋ', 'တ', 'ŧ', 'თ', 'ტ', 'ｔ', 'ת'],
-            'u'    => ['ú', 'ù', 'ủ', 'ũ', 'ụ', 'ư', 'ứ', 'ừ', 'ử', 'ữ', 'ự', 'û', 'ū', 'ů', 'ű', 'ŭ', 'ų', 'µ', 'у', 'ဉ', 'ု', 'ူ', 'ǔ', 'ǖ', 'ǘ', 'ǚ', 'ǜ', 'უ', 'उ', 'ｕ', 'ў', 'ü'],
-            'v'    => ['в', 'ვ', 'ϐ', 'ｖ', 'ו'],
-            'w'    => ['ŵ', 'ω', 'ώ', 'ဝ', 'ွ', 'ｗ'],
-            'x'    => ['χ', 'ξ', 'ｘ'],
-            'y'    => ['ý', 'ỳ', 'ỷ', 'ỹ', 'ỵ', 'ÿ', 'ŷ', 'й', 'ы', 'υ', 'ϋ', 'ύ', 'ΰ', 'ي', 'ယ', 'ｙ'],
-            'z'    => ['ź', 'ž', 'ż', 'з', 'ζ', 'ز', 'ဇ', 'ზ', 'ｚ', 'ז'],
-            'aa'   => ['ع', 'आ', 'آ'],
-            'ae'   => ['æ', 'ǽ'],
-            'ai'   => ['ऐ'],
-            'ch'   => ['ч', 'ჩ', 'ჭ', 'چ'],
-            'dj'   => ['ђ', 'đ'],
-            'dz'   => ['џ', 'ძ', 'דז'],
-            'ei'   => ['ऍ'],
-            'gh'   => ['غ', 'ღ'],
-            'ii'   => ['ई'],
-            'ij'   => ['ĳ'],
-            'kh'   => ['х', 'خ', 'ხ'],
-            'lj'   => ['љ'],
-            'nj'   => ['њ'],
-            'oe'   => ['ö', 'œ', 'ؤ'],
-            'oi'   => ['ऑ'],
-            'oii'  => ['ऒ'],
-            'ps'   => ['ψ'],
-            'sh'   => ['ш', 'შ', 'ش', 'ש'],
-            'shch' => ['щ'],
-            'ss'   => ['ß'],
-            'sx'   => ['ŝ'],
-            'th'   => ['þ', 'ϑ', 'θ', 'ث', 'ذ', 'ظ'],
-            'ts'   => ['ц', 'ც', 'წ'],
-            'ue'   => ['ü'],
-            'uu'   => ['ऊ'],
-            'ya'   => ['я'],
-            'yu'   => ['ю'],
-            'zh'   => ['ж', 'ჟ', 'ژ'],
-            '(c)'  => ['©'],
-            'A'    => ['Á', 'À', 'Ả', 'Ã', 'Ạ', 'Ă', 'Ắ', 'Ằ', 'Ẳ', 'Ẵ', 'Ặ', 'Â', 'Ấ', 'Ầ', 'Ẩ', 'Ẫ', 'Ậ', 'Å', 'Ā', 'Ą', 'Α', 'Ά', 'Ἀ', 'Ἁ', 'Ἂ', 'Ἃ', 'Ἄ', 'Ἅ', 'Ἆ', 'Ἇ', 'ᾈ', 'ᾉ', 'ᾊ', 'ᾋ', 'ᾌ', 'ᾍ', 'ᾎ', 'ᾏ', 'Ᾰ', 'Ᾱ', 'Ὰ', 'Ά', 'ᾼ', 'А', 'Ǻ', 'Ǎ', 'Ａ', 'Ä'],
-            'B'    => ['Б', 'Β', 'ब', 'Ｂ'],
-            'C'    => ['Ç', 'Ć', 'Č', 'Ĉ', 'Ċ', 'Ｃ'],
-            'D'    => ['Ď', 'Ð', 'Đ', 'Ɖ', 'Ɗ', 'Ƌ', 'ᴅ', 'ᴆ', 'Д', 'Δ', 'Ｄ'],
-            'E'    => ['É', 'È', 'Ẻ', 'Ẽ', 'Ẹ', 'Ê', 'Ế', 'Ề', 'Ể', 'Ễ', 'Ệ', 'Ë', 'Ē', 'Ę', 'Ě', 'Ĕ', 'Ė', 'Ε', 'Έ', 'Ἐ', 'Ἑ', 'Ἒ', 'Ἓ', 'Ἔ', 'Ἕ', 'Έ', 'Ὲ', 'Е', 'Ё', 'Э', 'Є', 'Ə', 'Ｅ'],
-            'F'    => ['Ф', 'Φ', 'Ｆ'],
-            'G'    => ['Ğ', 'Ġ', 'Ģ', 'Г', 'Ґ', 'Γ', 'Ｇ'],
-            'H'    => ['Η', 'Ή', 'Ħ', 'Ｈ'],
-            'I'    => ['Í', 'Ì', 'Ỉ', 'Ĩ', 'Ị', 'Î', 'Ï', 'Ī', 'Ĭ', 'Į', 'İ', 'Ι', 'Ί', 'Ϊ', 'Ἰ', 'Ἱ', 'Ἳ', 'Ἴ', 'Ἵ', 'Ἶ', 'Ἷ', 'Ῐ', 'Ῑ', 'Ὶ', 'Ί', 'И', 'І', 'Ї', 'Ǐ', 'ϒ', 'Ｉ'],
-            'J'    => ['Ｊ'],
-            'K'    => ['К', 'Κ', 'Ｋ'],
-            'L'    => ['Ĺ', 'Ł', 'Л', 'Λ', 'Ļ', 'Ľ', 'Ŀ', 'ल', 'Ｌ'],
-            'M'    => ['М', 'Μ', 'Ｍ'],
-            'N'    => ['Ń', 'Ñ', 'Ň', 'Ņ', 'Ŋ', 'Н', 'Ν', 'Ｎ'],
-            'O'    => ['Ó', 'Ò', 'Ỏ', 'Õ', 'Ọ', 'Ô', 'Ố', 'Ồ', 'Ổ', 'Ỗ', 'Ộ', 'Ơ', 'Ớ', 'Ờ', 'Ở', 'Ỡ', 'Ợ', 'Ø', 'Ō', 'Ő', 'Ŏ', 'Ο', 'Ό', 'Ὀ', 'Ὁ', 'Ὂ', 'Ὃ', 'Ὄ', 'Ὅ', 'Ὸ', 'Ό', 'О', 'Ө', 'Ǒ', 'Ǿ', 'Ｏ', 'Ö'],
-            'P'    => ['П', 'Π', 'Ｐ'],
-            'Q'    => ['Ｑ'],
-            'R'    => ['Ř', 'Ŕ', 'Р', 'Ρ', 'Ŗ', 'Ｒ'],
-            'S'    => ['Ş', 'Ŝ', 'Ș', 'Š', 'Ś', 'С', 'Σ', 'Ｓ'],
-            'T'    => ['Ť', 'Ţ', 'Ŧ', 'Ț', 'Т', 'Τ', 'Ｔ'],
-            'U'    => ['Ú', 'Ù', 'Ủ', 'Ũ', 'Ụ', 'Ư', 'Ứ', 'Ừ', 'Ử', 'Ữ', 'Ự', 'Û', 'Ū', 'Ů', 'Ű', 'Ŭ', 'Ų', 'У', 'Ǔ', 'Ǖ', 'Ǘ', 'Ǚ', 'Ǜ', 'Ｕ', 'Ў', 'Ü'],
-            'V'    => ['В', 'Ｖ'],
-            'W'    => ['Ω', 'Ώ', 'Ŵ', 'Ｗ'],
-            'X'    => ['Χ', 'Ξ', 'Ｘ'],
-            'Y'    => ['Ý', 'Ỳ', 'Ỷ', 'Ỹ', 'Ỵ', 'Ÿ', 'Ῠ', 'Ῡ', 'Ὺ', 'Ύ', 'Ы', 'Й', 'Υ', 'Ϋ', 'Ŷ', 'Ｙ'],
-            'Z'    => ['Ź', 'Ž', 'Ż', 'З', 'Ζ', 'Ｚ'],
-            'AE'   => ['Æ', 'Ǽ'],
-            'Ch'   => ['Ч'],
-            'Dj'   => ['Ђ'],
-            'Dz'   => ['Џ'],
-            'Gx'   => ['Ĝ'],
-            'Hx'   => ['Ĥ'],
-            'Ij'   => ['Ĳ'],
-            'Jx'   => ['Ĵ'],
-            'Kh'   => ['Х'],
-            'Lj'   => ['Љ'],
-            'Nj'   => ['Њ'],
-            'Oe'   => ['Œ'],
-            'Ps'   => ['Ψ'],
-            'Sh'   => ['Ш', 'ש'],
-            'Shch' => ['Щ'],
-            'Ss'   => ['ẞ'],
-            'Th'   => ['Þ', 'Θ', 'ת'],
-            'Ts'   => ['Ц'],
-            'Ya'   => ['Я', 'יא'],
-            'Yu'   => ['Ю', 'יו'],
-            'Zh'   => ['Ж'],
-            ' '    => ["\xC2\xA0", "\xE2\x80\x80", "\xE2\x80\x81", "\xE2\x80\x82", "\xE2\x80\x83", "\xE2\x80\x84", "\xE2\x80\x85", "\xE2\x80\x86", "\xE2\x80\x87", "\xE2\x80\x88", "\xE2\x80\x89", "\xE2\x80\x8A", "\xE2\x80\xAF", "\xE2\x81\x9F", "\xE3\x80\x80", "\xEF\xBE\xA0"],
-        ];
-    }
-
-    /**
-     * Returns the language specific replacements for the ascii method.
-     *
-     * Note: Adapted from Stringy\Stringy.
-     *
-     * @see https://github.com/danielstjules/Stringy/blob/3.1.0/LICENSE.txt
-     *
-     * @param  string  $language
-     * @return array|null
-     */
-    protected static function languageSpecificCharsArray($language)
-    {
-        static $languageSpecific;
-
-        if (! isset($languageSpecific)) {
-            $languageSpecific = [
-                'bg' => [
-                    ['х', 'Х', 'щ', 'Щ', 'ъ', 'Ъ', 'ь', 'Ь'],
-                    ['h', 'H', 'sht', 'SHT', 'a', 'А', 'y', 'Y'],
-                ],
-                'da' => [
-                    ['æ', 'ø', 'å', 'Æ', 'Ø', 'Å'],
-                    ['ae', 'oe', 'aa', 'Ae', 'Oe', 'Aa'],
-                ],
-                'de' => [
-                    ['ä',  'ö',  'ü',  'Ä',  'Ö',  'Ü'],
-                    ['ae', 'oe', 'ue', 'AE', 'OE', 'UE'],
-                ],
-                'he' => [
-                    ['א', 'ב', 'ג', 'ד', 'ה', 'ו'],
-                    ['ז', 'ח', 'ט', 'י', 'כ', 'ל'],
-                    ['מ', 'נ', 'ס', 'ע', 'פ', 'צ'],
-                    ['ק', 'ר', 'ש', 'ת', 'ן', 'ץ', 'ך', 'ם', 'ף'],
-                ],
-                'ro' => [
-                    ['ă', 'â', 'î', 'ș', 'ț', 'Ă', 'Â', 'Î', 'Ș', 'Ț'],
-                    ['a', 'a', 'i', 's', 't', 'A', 'A', 'I', 'S', 'T'],
-                ],
-            ];
-        }
-
-        return $languageSpecific[$language] ?? null;
     }
 }
